@@ -1,0 +1,12 @@
+{
+  "product": "PEN-X1 Pen Flashlight",
+  "channel": "Amazon US",
+  "target_price_usd": 34.95,
+  "target_users": ["EDC enthusiasts", "home emergency users", "light outdoor users"],
+  "battery_configurations": ["14500", "AA", "AAA", "2AA", "2AAA"],
+  "technology": ["BOOST driver", "battery identification", "mechanical compensation"],
+  "bom_rmb": {"without_battery": 48.6, "with_battery": 57.6},
+  "competitors": ["ThruNite Archer 2A C", "Streamlight MicroStream", "Nitecore MT2A Pro", "Weltool T1 Pro"],
+  "data_nature": "FACT",
+  "source_name": "PEN-X1 project brief"
+}

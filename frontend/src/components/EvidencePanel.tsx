@@ -1,0 +1,3 @@
+import type { Evidence } from '../types'
+import { chinese } from '../display'
+export function EvidencePanel({item}:{item?:Evidence}) { return <aside className="evidence"><div className="section-label">证据与来源</div>{item ? <><div className="evidence-id">{item.id}</div><span className="sample-tag">{chinese(item.data_nature)}</span><h3>{item.source}</h3><p>{item.content}</p><dl><dt>状态</dt><dd>{chinese(item.status)}</dd><dt>可信度</dt><dd>{chinese(item.confidence)}</dd></dl></> : <p className="empty">点击用户痛点或报告中引用的证据，查看原始内容。</p>}<div className="guard"><strong>防幻觉控制</strong><span>未知和需验证内容不会被写成确定性结论。</span></div></aside> }

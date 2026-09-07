@@ -1,0 +1,4 @@
+review_id,product,asin,rating,title,review_text,date,verified,helpful,source
+str-1,Streamlight MicroStream,DEMOstr,3,Battery flexibility,"Useful light, but I wish it accepted more common batteries when travelling.",2026-01-01,true,4,SAMPLE / DEMO
+str-2,Streamlight MicroStream,DEMOstr,2,Clip concern,"The pocket clip feels loose and can catch on a bag.",2026-01-02,true,2,SAMPLE / DEMO
+str-3,Streamlight MicroStream,DEMOstr,3,Runtime unclear,"Brightness is good, but runtime information needs to be clearer.",2026-01-03,true,3,SAMPLE / DEMO

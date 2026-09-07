@@ -1,0 +1,3 @@
+import type { Risk } from '../types'
+import { chinese } from '../display'
+export function RiskMatrix({risks, onSelect}:{risks:Risk[]; onSelect:(id:string)=>void}) { return <section><div className="section-head"><div><div className="section-label">重点风险</div><h2>风险矩阵</h2></div><span className="sample-tag">需验证</span></div><div className="risk-list">{risks.map(risk=><button aria-label={`查看风险：${risk.risk}`} key={risk.risk_id} className="risk-card" onClick={()=>onSelect(risk.risk_id)}><span className="risk-score">严重度 {risk.severity}</span><div><strong>{risk.risk}</strong><p>{chinese(risk.stage)} · {chinese(risk.module)} · 发生概率：{risk.probability ?? '待验证'}</p></div><span>查看 →</span></button>)}</div></section> }

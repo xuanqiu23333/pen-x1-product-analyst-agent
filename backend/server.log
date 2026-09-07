@@ -1,0 +1,5 @@
+INFO:     127.0.0.1:52752 - "POST /api/analysis-runs HTTP/1.1" 201 Created
+INFO:     127.0.0.1:52753 - "GET /api/analysis-runs/1d96c0f5-aca3-4206-aac0-cb7a58860a15/report HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54697 - "OPTIONS /api/analysis-runs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54697 - "POST /api/analysis-runs HTTP/1.1" 201 Created
+INFO:     127.0.0.1:54697 - "GET /api/analysis-runs/0dcc9ce0-6e00-4342-a6cb-49a47c45df94 HTTP/1.1" 200 OK

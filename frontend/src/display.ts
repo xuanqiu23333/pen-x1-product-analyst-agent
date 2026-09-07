@@ -1,0 +1,7 @@
+const labels: Record<string, string> = {
+  CONFIRMED:'已确认', INFERRED:'推断结论', UNKNOWN:'未知', NEED_VERIFY:'需验证', CONFLICT:'存在冲突', FACT:'项目事实', PUBLIC_FIXTURE:'公开演示数据', SAMPLE:'示例数据', SCENARIO:'情景假设', PENDING:'待处理', RUNNING:'执行中', COMPLETED:'已完成', WARNING:'警告', FAILED:'失败', VALIDATED:'校验通过', REVIEW_REQUIRED:'需要复核', CONDITIONAL_GO:'有条件推进', PASS:'通过', FAIL:'不通过', HIGH:'高', MEDIUM:'中', LOW:'低',
+  review_count:'评论数量', pain_points:'用户痛点', data_notice:'数据说明', sources:'数据来源', market:'市场调研', competitors:'竞品', opportunities:'市场机会', technical_risks:'技术风险', lifecycle_risks:'生命周期风险', profit_analysis:'利润分析', decision:'产品决策', gates:'产品关卡', status:'状态', confidence:'可信度', validation_method:'验证方法', mitigation:'缓解措施', severity:'严重度', probability:'发生概率', stage:'阶段', module:'模块', risk:'风险描述', price_usd:'售价（美元）', return_rate:'退货率', contribution_margin_usd:'贡献毛利（美元）', data_nature:'数据性质', without_battery:'不含电池 SKU', with_battery:'含电池 SKU', currency_note:'货币说明', cost_status:'成本状态',
+}
+export function chinese(value: unknown): string { return labels[String(value)] ?? String(value) }
+export function localize(value: unknown): unknown { if (Array.isArray(value)) return value.map(localize); if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value as Record<string,unknown>).map(([key,item])=>[labels[key] ?? key, localize(item)])); return typeof value === 'string' ? chinese(value) : value }
+export function localizeJson(value: unknown): string { return JSON.stringify(localize(value), null, 2) }

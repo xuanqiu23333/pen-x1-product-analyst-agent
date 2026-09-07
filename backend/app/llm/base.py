@@ -1,0 +1,3 @@
+from typing import Protocol, Any
+class LLMProvider(Protocol):
+    def complete_json(self, task: str, payload: dict[str, Any]) -> dict[str, Any]: ...

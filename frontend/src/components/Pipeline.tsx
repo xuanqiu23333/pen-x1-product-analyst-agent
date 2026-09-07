@@ -1,0 +1,4 @@
+import type { Skill } from '../types'
+import { chinese } from '../display'
+const stages = ['资料检查','市场调研','竞品分析','亚马逊用户之声','市场机会','技术风险','研发/量产/上市风险','利润分析','优势劣势机会威胁 / 决策','最终报告']
+export function Pipeline({skills, selected, onSelect}: {skills: Skill[]; selected: string; onSelect: (id:string)=>void}) { return <aside className="pipeline"><div className="section-label">分析技能流程</div>{stages.map((name, index) => {const id=String(index+1).padStart(2,'0'); const skill=skills.find(item=>item.skill_id===id); return <button aria-label={`查看${name}`} className={`pipeline-item ${selected===id?'selected':''}`} key={id} onClick={()=>onSelect(id)}><span className="stage-number">{id}</span><span>{name}</span><i title={chinese(skill?.status ?? 'PENDING')} className={`dot ${skill?.status==='COMPLETED'?'done':''}`}/></button>})}</aside> }

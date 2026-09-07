@@ -1,0 +1,4 @@
+[
+  {"keyword":"AA flashlight","price_range":"$20–$45","product_count_sample":120,"rating":4.5,"review_count":420,"battery_type":"AA / 2AA","main_features":["replaceable batteries","clip","water resistance"],"source":"Demo market fixture","status":"PUBLIC_FIXTURE"},
+  {"keyword":"EDC pen flashlight","price_range":"$18–$40","product_count_sample":95,"rating":4.4,"review_count":310,"battery_type":"AAA / rechargeable","main_features":["compact","pocket clip","simple switch"],"source":"Demo market fixture","status":"PUBLIC_FIXTURE"}
+]
