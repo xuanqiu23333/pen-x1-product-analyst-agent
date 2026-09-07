@@ -3,7 +3,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field
 
 FactStatus = Literal["CONFIRMED", "INFERRED", "UNKNOWN", "NEED_VERIFY", "CONFLICT"]
-DataNature = Literal["FACT", "PUBLIC_FIXTURE", "SAMPLE", "SCENARIO", "UNKNOWN"]
+DataNature = Literal["FACT", "PUBLIC_FIXTURE", "PUBLIC_DATA", "SAMPLE", "IMPORTED_DATA", "SCENARIO", "UNKNOWN"]
 
 class Fact(BaseModel):
     id: str
@@ -27,6 +27,9 @@ class Evidence(BaseModel):
     status: FactStatus = "CONFIRMED"
     confidence: str = "MEDIUM"
     source_url: str | None = None
+    source_type: str | None = None
+    retrieved_at: str | None = None
+    fallback_reason: str | None = None
 
 class PainPoint(BaseModel):
     pain_point: str
@@ -44,6 +47,8 @@ class Opportunity(BaseModel):
     user_problem: str
     voc_evidence: list[str]
     competitor_gap: list[str]
+    competitor_evidence: list[str] = Field(default_factory=list)
+    product_fact_ids: list[str] = Field(default_factory=list)
     product_capability: str
     market_evidence: list[str]
     confidence: str
@@ -95,3 +100,14 @@ class ProfitCell(BaseModel):
     return_cost_usd: float | None = None
     contribution_margin_usd: float | None = None
     data_nature: DataNature = "SCENARIO"
+
+
+
+
+class Claim(BaseModel):
+    claim_id: str
+    text: str
+    claim_type: str
+    fact_ids: list[str] = Field(default_factory=list)
+    evidence_ids: list[str] = Field(default_factory=list)
+    status: Literal['SUPPORTED', 'INFERRED', 'UNSUPPORTED', 'CONFLICT', 'NEED_VERIFY']

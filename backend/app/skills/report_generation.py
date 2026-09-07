@@ -1,7 +1,13 @@
+from pydantic import BaseModel
 from app.schemas.state import AnalysisState
-
-def run_report_generation(state: AnalysisState) -> dict:
-    lines = ["# PEN-X1 北美市场产品调研与上市可行性分析报告", "", "## 1. 执行摘要", "PEN-X1 当前结论为**有条件推进**。五种电池兼容是已确认的项目事实；其市场优势仍属于需要性能与用户理解验证的推断型机会。", "", "## 2. 数据来源与完整性", "- 项目事实：项目资料提供目标售价 34.95 美元、BOM、五种电池、BOOST 驱动、电池识别与机械补偿方案。", "- 公开演示数据：市场与竞品记录是演示用数据，不是实时亚马逊数据。", "- 示例数据：用户之声 CSV 是演示样例，不代表完整亚马逊评论人群。", "- 未知 / 需验证：未提供流明、续航、防水等级、尺寸、重量、温升与认证状态。", "", "## 3. 市场、竞品与用户之声", f"工作流处理了 {state.voc.get('review_count', 0)} 条示例评论。可见主题包括供电灵活性、口袋夹固定性与续航信息表达。", "", "## 4. 市场机会", "供电灵活性属于推断型候选机会，需要按电池类型验证输出/续航，并验证用户是否真正理解这种价值。", "", "## 5. 技术与生命周期风险", "电池识别、BOOST 稳定性、14500 温升、机械公差、EOL 覆盖、锂电运输和页面说明均需在上市前完成明确的验证计划。", "", "## 6. 价格利润敏感性", "售价与退货率行均为由 Python 执行的情景计算。亚马逊佣金、FBA、运费、广告与关税输入仍未知。", "", "## 7. 产品关卡与决策"]
-    for gate in state.decision.get("gates", []): lines.append(f"- {gate['name']}：**{gate['status']}** —— {gate['reason']}")
-    lines += ["", "## 8. 后续验证计划", "1. 按电池配置、品牌、电量、温度和模式执行风险优先的兼容性测试。", "2. 建立项目温升阈值，并完成 14500 电池 30 秒至 10 分钟测试。", "3. 通过极限尺寸、跌落、振动和磨损测试验证机械接触。", "4. 完成 EOL 治具、运输合规与页面理解度评审。", "5. 将实际佣金、FBA、运费和广告输入利润模型。"]
-    return {"title":"PEN-X1 北美市场产品调研与上市可行性分析报告", "status":"DRAFT", "markdown":"\n".join(lines)}
+class ReportLanguage(BaseModel): markdown: str
+def run_report_generation(state: AnalysisState,llm_provider=None,mode: str='DEMO')->dict:
+    lines=['# PEN-X1 北美市场产品调研与上市可行性分析报告','','## 执行摘要','PEN-X1 当前建议为**有条件推进**。报告结论来自结构化 Fact、Evidence、风险、关卡与 Python 计算，未提供参数保持未知或需验证。','','## 数据覆盖说明',f"内部事实：{len(state.facts)} 项；证据：{len(state.evidence)} 条；示例评论：{state.voc.get('review_count',0)} 条；市场数据状态：{state.project.get('data_provider_status',{}).get('市场数据',{}).get('source_type','UNKNOWN')}。",'','## 市场、机会与风险','供电灵活性仅在 VOC、竞品、市场与产品 Fact 同时引用时作为推断型候选机会。电池识别、BOOST、14500 温升、机械公差、EOL 与运输合规仍需验证。','','## 产品关卡与决策']
+    for gate in state.decision.get('gates',[]): lines.append(f"- {gate['name']}：**{gate['status']}** —— {gate['reason']}")
+    lines += ['','## 后续验证计划','1. 执行按电池配置、品牌、电量、温度和模式划分的兼容性测试。','2. 完成温升、机械接触、EOL、运输合规和页面理解度验证。','3. 补充佣金、FBA、运费和广告等实际成本，重新计算利润。']
+    fallback='\n'.join(lines)
+    if mode.upper()=='REAL' and llm_provider is not None:
+        try:
+            generated=ReportLanguage.model_validate(llm_provider.complete_json('仅返回 JSON：{"markdown":"中文报告"}。根据 AnalysisState 写报告，不得增加没有 Fact 或 Evidence 支持的参数。',{'facts':[f.model_dump() for f in state.facts],'decision':state.decision,'validation_rules':'未知内容不可确定性表达'})); state.project.setdefault('llm_skill_calls',[]).append('最终报告'); fallback=generated.markdown or fallback
+        except Exception as error: state.project.setdefault('warnings',[]).append(f'报告模型生成不可用：{error}')
+    return {'title':'PEN-X1 北美市场产品调研与上市可行性分析报告','status':'DRAFT','markdown':fallback}
