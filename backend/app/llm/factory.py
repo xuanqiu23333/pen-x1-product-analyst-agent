@@ -5,6 +5,8 @@ from .mock_provider import MockLLMProvider
 def get_llm_provider(force_real: bool = False):
     load_dotenv()
     api_key=os.getenv('DEEPSEEK_API_KEY')
+    if force_real and not api_key:
+        return None
     if (not force_real and os.getenv('DEMO_MODE','true').lower()=='true') or not api_key:
         return MockLLMProvider()
     from .deepseek_provider import DeepSeekProvider

@@ -1,14 +1,34 @@
 from pathlib import Path
 from uuid import uuid4
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from app.workflow.runner import AnalysisRunner
 from app.services.amazon_sync import AmazonSyncService
 from functools import lru_cache
+from app.services.review_store import MAX_CSV_BYTES, ReviewStore
 
 router = APIRouter(prefix="/api")
 RUNS: dict[str, dict] = {}
 DATA_ROOT = Path(__file__).resolve().parents[3] / "data"
+
+def get_review_store() -> ReviewStore:
+    return ReviewStore(DATA_ROOT / 'reviews_real' / 'reviews.sqlite3')
+
+@router.post('/reviews/import', status_code=201)
+async def import_reviews(request: Request, store: ReviewStore = Depends(get_review_store)):
+    if request.headers.get('content-type', '').split(';')[0].strip() != 'text/csv':
+        raise HTTPException(status_code=415, detail='请使用 text/csv 上传 UTF-8 文件。')
+    body = await request.body()
+    if len(body) > MAX_CSV_BYTES:
+        raise HTTPException(status_code=413, detail='CSV 文件不能超过 5 MB。')
+    try:
+        return store.import_csv(body.decode('utf-8-sig'))
+    except (UnicodeDecodeError, ValueError) as error:
+        raise HTTPException(status_code=422, detail=str(error)) from None
+
+@router.get('/reviews/stats')
+def review_stats(store: ReviewStore = Depends(get_review_store)):
+    return store.stats()
 
 @lru_cache(maxsize=1)
 def get_amazon_service() -> AmazonSyncService:

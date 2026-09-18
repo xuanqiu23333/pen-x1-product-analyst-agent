@@ -11,3 +11,4 @@ frontend/dist/
 backend/.pytest-tmp/
 data/outputs/
 data/amazon/
+data/reviews_real/

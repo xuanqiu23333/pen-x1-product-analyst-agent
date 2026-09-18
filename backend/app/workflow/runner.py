@@ -25,13 +25,15 @@ OFFICIAL_PRODUCTS = [('ThruNite','Archer 2A C','https://www.thrunite.com/archer-
 
 class AnalysisRunner:
     def __init__(self, data_root: Path, output_dir: Path | None = None,
-                 amazon_snapshot: dict | None = None, amazon_settings: AmazonSettings | None = None):
+                 amazon_snapshot: dict | None = None, amazon_settings: AmazonSettings | None = None,
+                 review_db_path: Path | None = None):
         self.data_root=Path(data_root); self.output_dir=output_dir or self.data_root/'outputs'
         self.amazon_snapshot=amazon_snapshot
         self.amazon_settings=amazon_settings or AmazonSettings.from_environment()
+        self.review_db_path=review_db_path
     def run_demo(self) -> AnalysisState: return self.run('DEMO')
     def run(self, mode: str='DEMO') -> AnalysisState:
-        mode=mode.upper(); fixture=FixtureProvider(self.data_root); review_provider=ReviewCsvProvider(self.data_root); llm_provider=get_llm_provider(force_real=mode=='REAL')
+        mode=mode.upper(); fixture=FixtureProvider(self.data_root); review_provider=ReviewCsvProvider(self.data_root, mode=mode, db_path=self.review_db_path); llm_provider=get_llm_provider(force_real=mode=='REAL')
         market_provider=fixture; competitor_provider=fixture; provider_status={'内部资料':{'status':'READY','source_type':'FACT'}, '市场数据':self._meta(fixture.get_market_data()), '评论数据':self._meta(review_provider.get_reviews())}
         state=AnalysisState(project={'name':'PEN-X1 产品分析师人工智能助手','mode':'REAL_MODE' if mode=='REAL' else 'DEMO_MODE','llm_provider':type(llm_provider).__name__,'data_provider_status':provider_status,'warnings':[]}, facts=list(load_project_facts(self.data_root).values()))
         snapshot=None
@@ -61,7 +63,10 @@ class AnalysisRunner:
           ('10','最终报告',lambda:self._report(state,llm_provider,mode))]
         for skill_id,name,action in steps:
             item=SkillRun(skill_id=skill_id,name=name,status='RUNNING'); state.skill_runs.append(item)
-            try: action(); item.status='COMPLETED'; item.message='已生成结构化结果。'
+            try:
+                action()
+                item.status='WARNING' if skill_id=='04' and state.voc.get('status') in {'NEED_DATA','NEED_LLM'} else 'COMPLETED'
+                item.message='真实评论不足或语义分析未完成。' if item.status=='WARNING' else '已生成结构化结果。'
             except Exception as error: item.status='FAILED'; item.message=str(error)
         state.validation=validate_report(state); state.report['status']='VALIDATED' if state.validation.passed else 'REVIEW_REQUIRED'
         self.output_dir.mkdir(parents=True,exist_ok=True); (self.output_dir/'PEN-X1 北美市场产品调研与上市可行性分析报告.md').write_text(state.report.get('markdown',''),encoding='utf-8')

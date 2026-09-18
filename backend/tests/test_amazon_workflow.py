@@ -29,16 +29,20 @@ def test_real_analysis_consumes_production_fact_evidence_without_mixing_review_c
     }
     settings = AmazonSettings('id', 'secret', 'refresh', mode='production', real_data_enabled=True)
     runner = AnalysisRunner(DATA_ROOT, output_dir=tmp_path, amazon_snapshot=snapshot,
-                            amazon_settings=settings)
+                            amazon_settings=settings, review_db_path=tmp_path / 'reviews.sqlite3')
     real = runner.run('REAL')
     assert real.fact_by_id('amazon-B000000001-title').value == 'Live Torch'
     assert any(row.get('asin') == 'B000000001' and row['price'] == 23.99 for row in real.competitors)
-    assert real.voc['review_count'] == 12
+    assert real.voc['review_count'] == 0
+    assert real.voc['status'] == 'NEED_DATA'
     assert real.voc['amazon_feedback_topics'] == 1
     assert real.voc['amazon_feedback_mentions'] == 3
-    assert any('ev-amazon-feedback-B000000001-negative-1' in item['voc_evidence']
-               for item in real.opportunities)
+    assert real.voc['amazon_feedback'][0]['evidence_id'] == 'ev-amazon-feedback-B000000001-negative-1'
+    assert any(item['source'] == 'Amazon Customer Feedback API' for item in real.voc['sources'])
+    assert real.opportunities == []
     assert 'Amazon SP-API' in real.report['markdown']
-    assert real.decision['gates'][0]['status'] == 'PARTIAL'
+    assert '示例评论：12 条' not in real.report['markdown']
+    assert real.decision['gates'][0]['status'] == 'PENDING'
     demo = runner.run_demo()
     assert demo.fact_by_id('amazon-B000000001-title') is None
+    assert demo.voc['review_count'] == 12

@@ -4,3 +4,32 @@
 .amazon-sync{margin-top:14px;padding:16px 20px;border:1px solid #303b5e;border-radius:14px;background:#0d1325cc}.amazon-sync-head{display:flex;justify-content:space-between;align-items:center;gap:20px}.amazon-sync h2{font-size:17px;margin:5px 0}.amazon-sync p{font-size:12px;color:#9ca8c8;margin:4px 0}.amazon-sync button{min-height:44px;border:1px solid #65519b;background:#302350;color:#fff;border-radius:8px;padding:10px 13px;cursor:pointer;display:flex;align-items:center;gap:7px}.amazon-sync button:disabled{opacity:.6;cursor:wait}.amazon-sync-meta,.amazon-sync-counts{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;font-size:12px;color:#b8c1db}.amazon-sync-meta span,.amazon-sync-counts span{border:1px solid #303b5e;background:#121a31;border-radius:7px;padding:8px 10px}.amazon-sync-counts b{font-size:16px;color:#e8edf7;margin-left:5px}.amazon-sync-note{color:#ffc671!important;margin-top:11px!important}@media(max-width:700px){.amazon-sync-head{display:block}.amazon-sync button{margin-top:10px}}
 .amazon-sync-products{display:flex;flex-wrap:wrap;gap:6px 18px;margin:12px 0 0;padding-left:18px;color:#b8c1db;font-size:12px}
 .amazon-sync-actions{display:flex;flex-wrap:wrap;gap:8px}
+.review-sync{margin-top:14px;padding:18px 20px;border:1px solid #365061;border-radius:14px;background:#0e1927cc}
+.review-sync-head{display:flex;align-items:center;justify-content:space-between;gap:20px}
+.review-sync h2{font-size:17px;margin:5px 0}
+.review-sync p{font-size:12px;color:#aab9c9;line-height:1.6;margin:5px 0}
+.review-sync button{min-height:44px;border:1px solid #397f76;background:#194a47;color:#e5fff5;border-radius:8px;padding:10px 14px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:7px}
+.review-sync button:hover:not(:disabled){background:#216158}
+.review-sync button:disabled{opacity:.6;cursor:wait}
+.review-sync button:focus-visible,.review-sync input:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.review-import{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:14px;border-top:1px solid #2c4651;padding-top:14px}
+.review-import label{font-size:12px;color:#d4e7e8;font-weight:700}
+.review-import input{max-width:100%;color:#b8cbd2;font-size:12px}
+.review-counts{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:9px;margin-top:15px}
+.review-counts span,.review-products span{display:flex;justify-content:space-between;gap:8px;align-items:center;border:1px solid #304957;background:#112332;border-radius:8px;padding:10px;color:#a9bec8;font-size:12px}
+.review-counts b{color:#e8fff4;font-size:17px}
+.review-coverage{display:flex;flex-wrap:wrap;gap:18px;margin-top:12px;color:#bdcdd3;font-size:12px}
+.review-coverage b{color:#86e6c2}
+.review-sync .review-note,.evidence .review-note{color:#a5bac8;margin-top:11px}
+.review-products{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-top:12px}
+.review-products b{color:#e8edf7;white-space:nowrap}
+.review-sync .review-success{color:#8fe8bc;margin-top:12px}
+.review-alert{border:1px solid #685734;border-radius:8px;background:#2a261e;color:#ffd58b;padding:11px;font-size:13px;line-height:1.6}
+.pain-card-main{display:block;width:100%;min-height:44px;padding:0;border:0;background:transparent;color:inherit;text-align:left;cursor:pointer}
+.pain-card-main:focus-visible,.pain-evidence-list button:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.pain-evidence-list{margin-top:12px;border-top:1px solid #303b5e;padding-top:10px;font-size:12px;color:#b9c9e3}
+.pain-evidence-list summary{cursor:pointer}
+.pain-evidence-list>div{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;max-height:160px;overflow:auto}
+.pain-evidence-list button{min-height:36px;border:1px solid #495980;border-radius:6px;background:#1b2944;color:#e8edf7;padding:6px 8px;cursor:pointer}
+@media(max-width:1100px){.review-counts{grid-template-columns:repeat(3,1fr)}.review-products{grid-template-columns:repeat(2,1fr)}.evidence{display:block;grid-column:1/-1}}
+@media(max-width:700px){.review-sync{padding:15px}.review-sync-head{display:block}.review-sync-head button{margin-top:12px}.review-counts{grid-template-columns:repeat(2,1fr)}.review-products{grid-template-columns:1fr}.evidence{grid-column:auto}}

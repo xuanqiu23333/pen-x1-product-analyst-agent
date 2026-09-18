@@ -32,6 +32,14 @@ class Evidence(BaseModel):
     source_name: str | None = None
     retrieved_at: str | None = None
     fallback_reason: str | None = None
+    external_review_id: str | None = None
+    asin: str | None = None
+    product_name: str | None = None
+    rating: float | None = None
+    review_date: str | None = None
+    helpful_votes: int | None = None
+    collected_at: str | None = None
+    verified_purchase: bool | None = None
 
 class PainPoint(BaseModel):
     pain_point: str
@@ -42,6 +50,10 @@ class PainPoint(BaseModel):
     products: list[str]
     evidence_review_ids: list[str]
     confidence: str
+    avg_rating: float | None = None
+    product_distribution: dict[str, int] = Field(default_factory=dict)
+    usage_scenarios: list[str] = Field(default_factory=list)
+    purchase_reasons: list[str] = Field(default_factory=list)
 
 class Opportunity(BaseModel):
     id: str
