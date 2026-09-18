@@ -15,6 +15,7 @@ class Fact(BaseModel):
     source_name: str = "PEN-X1 project brief"
     source_url: str | None = None
     source_date: str | None = None
+    retrieved_at: str | None = None
     status: FactStatus = "CONFIRMED"
     confidence: str = "HIGH"
     data_nature: DataNature = "FACT"
@@ -28,6 +29,7 @@ class Evidence(BaseModel):
     confidence: str = "MEDIUM"
     source_url: str | None = None
     source_type: str | None = None
+    source_name: str | None = None
     retrieved_at: str | None = None
     fallback_reason: str | None = None
 

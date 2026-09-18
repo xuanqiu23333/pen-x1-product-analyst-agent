@@ -1,12 +1,50 @@
 from pathlib import Path
 from uuid import uuid4
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from app.workflow.runner import AnalysisRunner
+from app.services.amazon_sync import AmazonSyncService
+from functools import lru_cache
 
 router = APIRouter(prefix="/api")
 RUNS: dict[str, dict] = {}
 DATA_ROOT = Path(__file__).resolve().parents[3] / "data"
+
+@lru_cache(maxsize=1)
+def get_amazon_service() -> AmazonSyncService:
+    return AmazonSyncService(DATA_ROOT)
+
+@router.post('/amazon/sync')
+def sync_amazon(service: AmazonSyncService = Depends(get_amazon_service)):
+    return service.sync_all_competitors()
+
+@router.get('/amazon/sync/latest')
+def latest_amazon_sync(service: AmazonSyncService = Depends(get_amazon_service)):
+    snapshot = service.latest_snapshot() or {'summary': {'status': 'NOT_CONFIGURED' if not service.settings.configured else 'PENDING',
+        'credential_configured': service.settings.configured, 'mode': service.settings.mode},
+        'products': [], 'facts': [], 'evidence': []}
+    snapshot['connection_status'] = ('NOT_CONFIGURED' if not service.settings.configured else
+                                     'DISABLED' if service.settings.mode == 'production' and not service.settings.real_data_enabled else
+                                     'ERROR' if snapshot['summary'].get('status') == 'ERROR' else
+                                     'LIVE' if service.settings.mode == 'production' and service.settings.real_data_enabled and snapshot['summary'].get('mode') == 'production' and snapshot['summary'].get('live_records', 0) else
+                                     'SANDBOX' if service.settings.mode == 'sandbox' else 'FALLBACK')
+    return snapshot
+
+@router.get('/amazon/products')
+def amazon_products(service: AmazonSyncService = Depends(get_amazon_service)):
+    return (service.latest_snapshot() or {}).get('products', [])
+
+@router.get('/amazon/products/{asin}')
+def amazon_product(asin: str, service: AmazonSyncService = Depends(get_amazon_service)):
+    products = (service.latest_snapshot() or {}).get('products', [])
+    product = next((item for item in products if item['asin'] == asin), None)
+    if product is None:
+        raise HTTPException(status_code=404, detail='未找到该 ASIN 的同步结果。')
+    return product
+
+@router.get('/amazon/products/{asin}/feedback')
+def amazon_product_feedback(asin: str, service: AmazonSyncService = Depends(get_amazon_service)):
+    return amazon_product(asin, service).get('feedback', [])
 
 class StartRunRequest(BaseModel):
     mode: str = "DEMO"

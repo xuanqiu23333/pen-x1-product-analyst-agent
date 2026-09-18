@@ -16,7 +16,10 @@ def run_opportunity_analysis(state: AnalysisState, llm_provider=None, mode: str 
         aspect=point.get('aspect')
         if aspect != 'battery':
             continue
-        voc_evidence=point.get('evidence_review_ids', [])
+        amazon_evidence=[item['evidence_id'] for item in state.voc.get('amazon_feedback',[])
+                         if item.get('sentiment')=='negative' and item.get('evidence_id')
+                         and (aspect.lower() in item.get('topic','').lower())]
+        voc_evidence=point.get('evidence_review_ids', [])+amazon_evidence
         fact=state.fact_by_id('battery_configurations')
         fact_ids=['battery_configurations'] if fact else []
         complete=bool(voc_evidence and competitor_evidence and market_evidence and fact_ids)

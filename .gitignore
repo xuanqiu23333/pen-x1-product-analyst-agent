@@ -7,3 +7,4 @@ frontend/dist/
 
 backend/.pytest-tmp/
 data/outputs/
+data/amazon/

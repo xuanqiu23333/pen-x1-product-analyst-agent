@@ -34,7 +34,7 @@ def _fallback_classifications(reviews: list[dict]) -> list[SemanticReview]:
         items.append(SemanticReview(review_id=review['review_id'], sentiment='negative' if int(review['rating']) <= 3 else 'positive', aspects=aspects))
     return items
 
-def run_voc_analysis(state: AnalysisState, data_root, llm_provider=None, mode: str = 'DEMO', review_provider=None) -> dict:
+def run_voc_analysis(state: AnalysisState, data_root, llm_provider=None, mode: str = 'DEMO', review_provider=None, amazon_feedback: list[dict] | None = None) -> dict:
     reviews = review_provider.get_reviews().data if review_provider else load_reviews(data_root)
     classification_source='RULE_FALLBACK'
     semantic_items=None
@@ -58,4 +58,15 @@ def run_voc_analysis(state: AnalysisState, data_root, llm_provider=None, mode: s
         for row in rows:
             state.add_evidence(Evidence(id=f"ev-review-{row['review_id']}", source=row['source'], content=row['review_text'], data_nature='SAMPLE', confidence='LOW'))
         pain_points.append(PainPoint(pain_point=pain_point, aspect=aspect, mentions=len(unique_ids), frequency=round(len(unique_ids)/len(reviews),2) if reviews else 0, severity=severity.upper(), products=sorted({row['product'] for row in rows}), evidence_review_ids=[f"ev-review-{item}" for item in unique_ids], confidence='LOW' if classification_source != 'LLM_STRUCTURED' else 'MEDIUM').model_dump())
-    return {'review_count':len(reviews), 'data_notice':'示例评论数据；不是实时亚马逊评论数据。', 'classification_source':classification_source, 'pain_points':sorted(pain_points,key=lambda item:item['mentions'],reverse=True), 'sources':[{'source':'评论 CSV 导入','data_nature':'SAMPLE'}]}
+    feedback=[]
+    for item in amazon_feedback or []:
+        evidence=next((row for row in state.evidence if row.id.startswith(f"ev-amazon-feedback-{item['asin']}-{item['sentiment']}-") and item['topic'] in row.content),None)
+        feedback.append({'asin':item['asin'],'topic':item['topic'],'sentiment':item['sentiment'],
+            'mentions':item.get('mentions'),'star_rating_impact':item.get('star_rating_impact'),
+            'trend':item.get('trend',[]),'evidence_id':evidence.id if evidence else None})
+    return {'review_count':len(reviews), 'amazon_feedback_topics':len(feedback),
+        'amazon_feedback_mentions':sum(item['mentions'] or 0 for item in feedback),
+        'amazon_feedback':feedback,
+        'data_notice':'CSV 原始评论与 Amazon 官方聚合主题分别统计；官方接口不提供评论全集。' if feedback else '示例评论数据；不是实时亚马逊评论数据。',
+        'classification_source':classification_source, 'pain_points':sorted(pain_points,key=lambda item:item['mentions'],reverse=True),
+        'sources':[{'source':'评论 CSV 导入','data_nature':'SAMPLE'}]+([{'source':'Amazon Customer Feedback API','data_nature':'PUBLIC_DATA'}] if feedback else [])}

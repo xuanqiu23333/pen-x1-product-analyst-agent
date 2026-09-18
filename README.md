@@ -22,3 +22,16 @@ npm --prefix frontend run build
 ```
 
 产物目录 `data/outputs/` 与测试临时目录 `backend/.pytest-tmp/` 均已忽略，不会进入版本库。
+
+## Amazon SP-API 手动同步
+
+1. 在项目自己的 `.env` 中填写 `.env.example` 所列的 LWA Client ID、Client Secret、Refresh Token；该文件已被 Git 忽略。配置应用需要 Amazon 授予相应 Catalog、Pricing 和 Customer Feedback 操作权限。
+2. 在 `data/config/amazon_competitors.json` 中核实四款竞品的真实子 ASIN 后手动填写。当前四项为空；项目不会猜测 ASIN。
+3. 先保持 `AMAZON_SP_API_MODE=sandbox`。点击页面的“同步亚马逊数据”，或调用 `POST /api/amazon/sync`。沙箱只提供模拟响应；页面不会把它标记为真实商品数据。
+4. 具备正式只读权限后，将模式改为 `production` 并将 `AMAZON_REAL_DATA_ENABLED=true`，重启后端再手动同步。随后通过 `POST /api/analysis-runs`、请求体 `{"mode":"REAL"}` 启动读取最新生产快照的现有分析工作流。DEMO 模式始终离线。
+
+同步状态与记录可通过 `GET /api/amazon/sync/latest`、`GET /api/amazon/products`、`GET /api/amazon/products/{asin}` 和 `GET /api/amazon/products/{asin}/feedback` 查询。摘要直接统计目标商品、完整成功商品、目录记录、价格记录、官方反馈主题、实际 API 请求、错误与限流事件。无凭证返回 `NOT_CONFIGURED`；ASIN 为空返回 `ASIN_REQUIRED`；失败商品继续使用官网或 Fixture。
+
+快照保存在 `data/amazon/latest/snapshot.json` 与 `data/amazon/history/YYYY-MM-DD/<run-id>.json`；这两个目录及真实同步数据均不提交 Git。快照仅保存标准化商品记录与 Fact/Evidence，不保存 Token、Secret 或原始响应。官方 Customer Feedback 是主题、提及量和趋势，不是评论全文；CSV 中的原始评论数量始终单独展示。第二阶段调度器与变化触发尚未加入，待真实手动链路通过后实施。
+
+接口依据：[Amazon SP-API 连接与请求头](https://developer-docs.amazon.com/sp-api/docs/connecting-to-the-selling-partner-api)、[Catalog Items](https://developer-docs.amazon.com/sp-api/reference/getcatalogitem)、[Product Pricing getItemOffers](https://developer-docs.amazon.com/sp-api/reference/getitemoffers)、[Customer Feedback topics](https://developer-docs.amazon.com/sp-api/reference/getitemreviewtopics)、[Amazon 沙箱](https://developer-docs.amazon.com/sp-api/docs/sp-api-sandbox)。
