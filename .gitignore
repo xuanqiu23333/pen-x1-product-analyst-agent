@@ -1,4 +1,7 @@
 .env
+.env.local
+credentials.json
+secrets/
 __pycache__/
 .pytest_cache/
 *.pyc

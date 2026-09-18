@@ -115,8 +115,12 @@ class AmazonSyncService:
             else:
                 if provider is None:
                     auth = AmazonAuth(self.settings.client_id, self.settings.client_secret,
-                                      self.settings.refresh_token)
-                    client = AmazonSPAPIClient(auth, endpoint=self.settings.api_endpoint)
+                                      self.settings.refresh_token, token_url=self.settings.lwa_token_url,
+                                      timeout=self.settings.timeout,
+                                      refresh_buffer_seconds=self.settings.token_refresh_buffer_seconds)
+                    client = AmazonSPAPIClient(auth, endpoint=self.settings.api_endpoint,
+                                               timeout=self.settings.timeout,
+                                               max_retries=self.settings.max_retries)
                     provider = AmazonSPAPIProvider(client, self.settings.marketplace_id,
                                                    self.settings.mode)
                 operations = (

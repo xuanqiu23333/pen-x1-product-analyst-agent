@@ -25,13 +25,23 @@ npm --prefix frontend run build
 
 ## Amazon SP-API 手动同步
 
-1. 在项目自己的 `.env` 中填写 `.env.example` 所列的 LWA Client ID、Client Secret、Refresh Token；该文件已被 Git 忽略。配置应用需要 Amazon 授予相应 Catalog、Pricing 和 Customer Feedback 操作权限。
+1. 在项目自己的 `.env` 中填写 `.env.example` 所列的 `SP_API_LWA_CLIENT_ID`、`SP_API_LWA_CLIENT_SECRET`、`SP_API_REFRESH_TOKEN`；该文件已被 Git 忽略。既有 `AMAZON_*` 配置名仍被兼容读取，但请勿在一个 `.env` 中重复填写两套凭据。配置应用需要 Amazon 授予相应 Catalog、Pricing 和 Customer Feedback 操作权限。
 2. 在 `data/config/amazon_competitors.json` 中核实四款竞品的真实子 ASIN 后手动填写。当前四项为空；项目不会猜测 ASIN。
-3. 先保持 `AMAZON_SP_API_MODE=sandbox`。点击页面的“同步亚马逊数据”，或调用 `POST /api/amazon/sync`。沙箱只提供模拟响应；页面不会把它标记为真实商品数据。
-4. 具备正式只读权限后，将模式改为 `production` 并将 `AMAZON_REAL_DATA_ENABLED=true`，重启后端再手动同步。随后通过 `POST /api/analysis-runs`、请求体 `{"mode":"REAL"}` 启动读取最新生产快照的现有分析工作流。DEMO 模式始终离线。
+3. 先保持 `SP_API_ENV=sandbox`。点击页面的“同步亚马逊数据”，或调用 `POST /api/amazon/sync`。沙箱只提供模拟响应；页面不会把它标记为真实商品数据。
+4. 既有正式只读流程仍保留，需具备相应权限后单独配置 `SP_API_ENV=production`、正式 endpoint 与 `AMAZON_REAL_DATA_ENABLED=true`。本轮独立 Orders 冒烟脚本强制 Sandbox，绝不会走该流程。DEMO 模式始终离线。
 
 同步状态与记录可通过 `GET /api/amazon/sync/latest`、`GET /api/amazon/products`、`GET /api/amazon/products/{asin}` 和 `GET /api/amazon/products/{asin}/feedback` 查询。摘要直接统计目标商品、完整成功商品、目录记录、价格记录、官方反馈主题、实际 API 请求、错误与限流事件。无凭证返回 `NOT_CONFIGURED`；ASIN 为空返回 `ASIN_REQUIRED`；失败商品继续使用官网或 Fixture。
 
 快照保存在 `data/amazon/latest/snapshot.json` 与 `data/amazon/history/YYYY-MM-DD/<run-id>.json`；这两个目录及真实同步数据均不提交 Git。快照仅保存标准化商品记录与 Fact/Evidence，不保存 Token、Secret 或原始响应。官方 Customer Feedback 是主题、提及量和趋势，不是评论全文；CSV 中的原始评论数量始终单独展示。第二阶段调度器与变化触发尚未加入，待真实手动链路通过后实施。
 
 接口依据：[Amazon SP-API 连接与请求头](https://developer-docs.amazon.com/sp-api/docs/connecting-to-the-selling-partner-api)、[Catalog Items](https://developer-docs.amazon.com/sp-api/reference/getcatalogitem)、[Product Pricing getItemOffers](https://developer-docs.amazon.com/sp-api/reference/getitemoffers)、[Customer Feedback topics](https://developer-docs.amazon.com/sp-api/reference/getitemreviewtopics)、[Amazon 沙箱](https://developer-docs.amazon.com/sp-api/docs/sp-api-sandbox)。
+
+## Orders Sandbox 独立冒烟
+
+该脚本只验证 LWA → 北美 Sandbox → Orders v2026-01-01 静态模拟订单，不修改 Agent 或同步快照。先配置项目本地 `.env`，再使用 Conda `pen-x1-agent` 的 Python 运行：
+
+```powershell
+C:\Users\86166\anaconda3\envs\pen-x1-agent\python.exe scripts\test_sp_api_sandbox.py
+```
+
+脚本仅显示订单摘要和脱敏错误；详细配置、官方静态测试用例与局限见 [Amazon SP-API 开发说明](docs/amazon-sp-api.md)。
