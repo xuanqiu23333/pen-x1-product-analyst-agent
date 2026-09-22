@@ -1,11 +1,12 @@
 from pathlib import Path
 from uuid import uuid4
 from fastapi import APIRouter, Depends, HTTPException, Request
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from app.workflow.runner import AnalysisRunner
 from app.services.amazon_sync import AmazonSyncService
 from functools import lru_cache
 from app.services.review_store import MAX_CSV_BYTES, ReviewStore
+from app.services.review_collection import ReviewCollectionService
 
 router = APIRouter(prefix="/api")
 RUNS: dict[str, dict] = {}
@@ -13,6 +14,13 @@ DATA_ROOT = Path(__file__).resolve().parents[3] / "data"
 
 def get_review_store() -> ReviewStore:
     return ReviewStore(DATA_ROOT / 'reviews_real' / 'reviews.sqlite3')
+
+@lru_cache(maxsize=1)
+def get_review_collection_service() -> ReviewCollectionService:
+    return ReviewCollectionService(DATA_ROOT)
+
+class ReviewCollectRequest(BaseModel):
+    max_reviews_per_product: int = Field(default=100, ge=1, le=300)
 
 @router.post('/reviews/import', status_code=201)
 async def import_reviews(request: Request, store: ReviewStore = Depends(get_review_store)):
@@ -29,6 +37,17 @@ async def import_reviews(request: Request, store: ReviewStore = Depends(get_revi
 @router.get('/reviews/stats')
 def review_stats(store: ReviewStore = Depends(get_review_store)):
     return store.stats()
+
+@router.post('/reviews/collect')
+def collect_reviews(request: ReviewCollectRequest | None = None,
+                    service: ReviewCollectionService = Depends(get_review_collection_service)):
+    target = request.max_reviews_per_product if request else 100
+    return service.collect_all_competitor_reviews(target)
+
+@router.get('/reviews/collection/latest')
+def latest_review_collection(
+        service: ReviewCollectionService = Depends(get_review_collection_service)):
+    return service.latest_collection()
 
 @lru_cache(maxsize=1)
 def get_amazon_service() -> AmazonSyncService:

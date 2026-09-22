@@ -8,11 +8,12 @@ class CountingProvider:
     def __init__(self): self.calls=[]
     def complete_json(self, task, payload): self.calls.append(task); return {}
 
-def test_real_core_analysis_skills_call_injected_provider():
+def test_real_risk_and_decision_skills_call_provider_but_report_stays_deterministic():
     state=AnalysisState()
     provider=CountingProvider()
     run_technical_risk(state, provider, 'REAL')
     run_lifecycle_risk(state, provider, 'REAL')
     run_swot_decision(state, provider, 'REAL')
-    run_report_generation(state, provider, 'REAL')
-    assert len(provider.calls) == 4
+    report=run_report_generation(state, provider, 'REAL')
+    assert len(provider.calls) == 3
+    assert report['title'] == 'PEN-X1 Real VOC Smoke Report'

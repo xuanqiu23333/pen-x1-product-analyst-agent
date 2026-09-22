@@ -1,6 +1,6 @@
 [
-  {"brand": "ThruNite", "model": "Archer 2A C", "asin": "", "marketplace": "US"},
-  {"brand": "Streamlight", "model": "MicroStream", "asin": "", "marketplace": "US"},
-  {"brand": "Nitecore", "model": "MT2A Pro", "asin": "", "marketplace": "US"},
-  {"brand": "Weltool", "model": "T1 Pro", "asin": "", "marketplace": "US"}
+  {"brand": "ThruNite", "model": "Archer 2A C", "asin": "B0CTCDPXFY", "amazon_url": "https://www.amazon.com/dp/B0CTCDPXFY", "marketplace": "US"},
+  {"brand": "Streamlight", "model": "MicroStream 66318", "asin": "B00143JZ08", "amazon_url": "https://www.amazon.com/dp/B00143JZ08", "marketplace": "US"},
+  {"brand": "Nitecore", "model": "MT2A Pro", "asin": "B0CM4LM1K9", "amazon_url": "https://www.amazon.com/dp/B0CM4LM1K9", "marketplace": "US"},
+  {"brand": "Weltool", "model": "T1 Pro", "asin": "", "amazon_url": "", "marketplace": "US"}
 ]

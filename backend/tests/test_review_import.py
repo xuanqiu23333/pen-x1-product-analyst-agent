@@ -3,6 +3,7 @@ import sqlite3
 import warnings
 
 from bs4 import MarkupResemblesLocatorWarning
+import pytest
 
 from app.data_providers.review_csv_provider import ReviewCsvProvider
 from app.services.review_cleaning import clean_text
@@ -10,6 +11,23 @@ from app.services.review_store import ReviewStore
 
 
 HEADER = 'review_id,asin,product,rating,title,review_text,date,verified,helpful,source_url,reviewer_email\n'
+
+
+@pytest.mark.parametrize(('count', 'expected'), [
+    (19, 'LOW_COVERAGE'),
+    (20, 'PARTIAL'),
+    (49, 'PARTIAL'),
+    (50, 'GOOD_COVERAGE'),
+])
+def test_free_mode_coverage_boundaries_are_demo_hints(tmp_path, count, expected):
+    store = ReviewStore(tmp_path / f'reviews-{count}.sqlite3')
+    rows = ''.join(
+        f'R{index:04d},B000000001,ThruNite,4,T,Review text {index},2025-03-10,yes,0,,\n'
+        for index in range(count)
+    )
+    store.import_csv(HEADER + rows)
+
+    assert store.stats()['coverage_level'] == expected
 
 
 def test_import_cleans_and_keeps_only_review_fields(tmp_path):
@@ -83,7 +101,7 @@ def test_real_provider_never_reads_demo_samples(tmp_path):
     real = ReviewCsvProvider(Path(__file__).resolve().parents[2] / 'data', mode='REAL', db_path=tmp_path / 'reviews.sqlite3')
     demo = ReviewCsvProvider(Path(__file__).resolve().parents[2] / 'data', mode='DEMO')
     assert real.get_reviews().data == []
-    assert real.get_reviews().source_type == 'IMPORTED_REAL'
+    assert real.get_reviews().source_type == 'REAL_REVIEW'
     assert len(demo.get_reviews().data) == 12
     assert demo.get_reviews().source_type == 'SAMPLE'
 
@@ -94,6 +112,7 @@ def test_real_csv_provider_can_import_without_changing_demo_source(tmp_path):
     csv_text = HEADER + 'R1,B000000001,ThruNite,4,T,Useful beam,2025-03-10,yes,1,,\n'
     assert provider.import_csv(csv_text)['valid_reviews'] == 1
     assert provider.get_reviews().data[0]['review_id'] == 'R1'
+    assert 'Apify' in provider.get_reviews().source_name
     assert ReviewCsvProvider(root, mode='DEMO').get_reviews().source_type == 'SAMPLE'
 
 

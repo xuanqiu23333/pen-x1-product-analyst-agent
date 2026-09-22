@@ -28,6 +28,8 @@ class Evidence(BaseModel):
     status: FactStatus = "CONFIRMED"
     confidence: str = "MEDIUM"
     source_url: str | None = None
+    review_url: str | None = None
+    product_url: str | None = None
     source_type: str | None = None
     source_name: str | None = None
     retrieved_at: str | None = None
@@ -36,6 +38,7 @@ class Evidence(BaseModel):
     asin: str | None = None
     product_name: str | None = None
     rating: float | None = None
+    review_title: str | None = None
     review_date: str | None = None
     helpful_votes: int | None = None
     collected_at: str | None = None
@@ -43,6 +46,7 @@ class Evidence(BaseModel):
 
 class PainPoint(BaseModel):
     pain_point: str
+    topic: str | None = None
     aspect: str
     mentions: int
     frequency: float
@@ -54,10 +58,15 @@ class PainPoint(BaseModel):
     product_distribution: dict[str, int] = Field(default_factory=dict)
     usage_scenarios: list[str] = Field(default_factory=list)
     purchase_reasons: list[str] = Field(default_factory=list)
+    sample_size: int = 0
+    mention_count: int = 0
+    mention_rate: float = 0.0
+    affected_products: list[str] = Field(default_factory=list)
 
 class Opportunity(BaseModel):
     id: str
     title: str
+    opportunity: str | None = None
     user_problem: str
     voc_evidence: list[str]
     competitor_gap: list[str]
@@ -68,6 +77,16 @@ class Opportunity(BaseModel):
     confidence: str
     status: FactStatus
     validation_needed: list[str] = Field(default_factory=list)
+    source_pain_points: list[str] = Field(default_factory=list)
+    supporting_reviews: int = 0
+    evidence_ids: list[str] = Field(default_factory=list)
+    mention_frequency: float = 0.0
+    affected_products: list[str] = Field(default_factory=list)
+    canonical_pain_points: list[str] = Field(default_factory=list)
+    cross_product_support: bool = False
+    product_mention_rate: float = 0.0
+    corpus_mention_rate: float = 0.0
+    product_distribution: dict[str, Any] = Field(default_factory=dict)
 
 class RiskCard(BaseModel):
     risk_id: str
@@ -99,6 +118,7 @@ class SkillRun(BaseModel):
 
 class ValidationResult(BaseModel):
     passed: bool
+    status: Literal["PASS", "WARN", "FAIL"] = "PASS"
     warnings: list[str] = Field(default_factory=list)
     errors: list[str] = Field(default_factory=list)
 

@@ -61,7 +61,12 @@ def test_real_voc_uses_structured_output_and_python_aggregation(tmp_path):
     assert result['classification_source'] == 'LLM_STRUCTURED'
     assert result['review_count'] == 2
     assert point['mentions'] == 2
+    assert point['topic'] == '口袋夹松动'
     assert point['frequency'] == 1.0
+    assert point['mention_count'] == 2
+    assert point['sample_size'] == 2
+    assert point['mention_rate'] == 1.0
+    assert point['affected_products'] == ['Streamlight', 'ThruNite']
     assert point['avg_rating'] == 3.0
     assert point['product_distribution'] == {'ThruNite': 1, 'Streamlight': 1}
     assert point['evidence_review_ids'] == ['ev-review-R123', 'ev-review-R124']
@@ -74,9 +79,24 @@ def test_real_voc_uses_structured_output_and_python_aggregation(tmp_path):
     assert evidence.rating == 2
     assert evidence.review_date == '2025-03-10'
     assert evidence.content == 'Loose clip'
+    assert evidence.review_title == 'Clip'
     assert evidence.helpful_votes == 7
     assert evidence.source_url == 'https://www.amazon.com/review/R123'
     assert evidence.retrieved_at
+    assert result['product_review_counts'] == {'Streamlight': 1, 'ThruNite': 1}
+    assert result['products_analyzed'] == 2
+    assert result['rating_distribution']['Streamlight'] == {'4': 1}
+    assert result['verified_purchase_ratio'] == {'Streamlight': 0.0, 'ThruNite': 1.0}
+    assert result['usage_scenarios'][0]['evidence_ids'] == ['ev-review-R123', 'ev-review-R124']
+    assert result['usage_scenarios'][0]['topic'] == '随身携带'
+    assert result['purchase_drivers'][0]['mention_count'] == 2
+    streamlight = result['product_insights']['Streamlight']
+    assert streamlight['review_count'] == 1
+    assert streamlight['pain_points'][0]['mention_count'] == 1
+    assert streamlight['pain_points'][0]['sample_size'] == 1
+    assert streamlight['pain_points'][0]['mention_rate'] == 1.0
+    assert streamlight['pain_points'][0]['evidence_review_ids'] == ['ev-review-R124']
+    assert streamlight['usage_scenarios'][0]['sample_size'] == 1
 
 
 def test_real_reviews_without_deepseek_do_not_use_rule_fallback(tmp_path):

@@ -5,13 +5,13 @@
 ## 运行模式
 
 - `DEMO`：完全离线。市场、竞品来自 Fixture，评论来自本地 CSV；不会调用大模型或外部网页。
-- `REAL`：评论只读取项目 SQLite 中有效的 `IMPORTED_REAL` CSV 导入记录，不会使用 12 条演示评论。配置 `DEEPSEEK_API_KEY` 后进行结构化 VOC；无真实评论为 `NEED_DATA`，有评论但模型不可用为 `NEED_LLM`。品牌官网数据可继续按既有逻辑降级，但评论不降级到样例。
+- `REAL`：评论只读取项目 SQLite 中有效的 `IMPORTED_REAL`、`BRIGHTDATA_REAL` 或 `APIFY_REAL` 记录，不会使用 12 条演示评论。配置 `DEEPSEEK_API_KEY` 后进行结构化 VOC；无真实评论为 `NEED_DATA`，有评论但模型不可用为 `NEED_LLM`。品牌官网数据可继续按既有逻辑降级，但评论不降级到样例。
 
 ## 数据来源与边界
 
 - 品牌官网：普通 HTTP/BeautifulSoup 请求、12 秒超时；只提取公开页面的标题、价格和基础规格，不使用反爬绕过或自动化浏览器。
-- 亚马逊：仅限公开商品摘要（标题、价格、评分、评论数、要点）；不抓取评论页。
-- 评论：DEMO 使用本地 CSV 样本；REAL 使用用户有权提供的 CSV 导入，来源类型 `IMPORTED_REAL`，不代表系统独立核验了 Amazon 平台真实性。VOC 的证据编号统一为 `ev-review-*`。
+- 亚马逊商品数据：SP-API 仅同步官方接口可用的目录、价格和 Customer Feedback 聚合主题；不抓取评论页。
+- 评论：DEMO 使用本地 CSV 样本；REAL 使用用户有权提供的 CSV（`IMPORTED_REAL`），或由 Bright Data（`BRIGHTDATA_REAL`）/Apify（`APIFY_REAL`）返回的 Amazon 评论数据。三种真实来源共用清洗、跨来源去重、SQLite、VOC 和 Evidence 链路，且不会混入 SAMPLE。VOC 的证据编号统一为 `ev-review-*`。
 - 每条证据可附来源类型、链接、获取时间、可用状态和降级原因；市场样本/演示资料会让 Market Gate 处于“部分通过”，不会冒充真实结论。
 
 ## 验证
@@ -35,9 +35,34 @@ review_id,asin,product,rating,title,review_text,date,verified,helpful,source_url
 
 导入运行与评论分别存于本项目 `data/reviews_real/reviews.sqlite3` 中的 `review_collection_run`、`review_raw` 两表。有效、重复、无效行有独立状态；优先按外部评论 ID 去重，缺 ID 时按 ASIN、清洗后正文、评分和日期的 SHA-256 去重。SQLite 文件已在 `.gitignore` 排除。`GET /api/reviews/stats` 返回累计原始/有效/重复/无效数量、四竞品分布、来源占比与最近采集时间。
 
-页面覆盖等级仅为本项目内部演示定义：0 条 `NEED_DATA`，1–49 条 `LOW_COVERAGE`，50–199 条 `PARTIAL`，200 条及以上 `SUFFICIENT_FOR_DEMO`；不是行业统计标准。真实评论 VOC 通过 DeepSeek 结构化分类和 Pydantic 校验，再由 Python 计算提及量、频率、平均评分及商品分布。每个痛点的 `ev-review-*` 可以在 Evidence 面板查看原文、商品、ASIN、评分、日期、点赞数、来源链接和采集时间。无 DeepSeek 密钥时仍可导入和查看证据，但 VOC 不会用规则分类冒充已完成。
+页面覆盖等级仅为本项目内部演示定义：0 条 `NEED_DATA`，1–19 条 `LOW_COVERAGE`，20–49 条 `PARTIAL`，50 条及以上 `GOOD_COVERAGE`；不是行业统计标准。真实评论 VOC 通过 DeepSeek 结构化分类和 Pydantic 校验，再由 Python 计算提及量、频率、平均评分及商品分布。每个痛点的 `ev-review-*` 可以在 Evidence 面板查看原文、商品、ASIN、评分、日期、点赞数、来源链接和采集时间。无 DeepSeek 密钥时仍可导入和查看证据，但 VOC 不会用规则分类冒充已完成。
 
-仅导入已获得使用权限的评论文件；本项目不抓取 Amazon Review 页面，不验证导入评论是否真正来自 Amazon。
+仅导入已获得使用权限的评论文件；本项目自身不抓取 Amazon Review 页面，不验证 CSV 评论是否真正来自 Amazon。
+
+## Bright Data 真实评论采集
+
+本项目通过 Bright Data Amazon Reviews Scraper API 采集，不实现 Amazon 页面爬虫、代理池、验证码绕过或浏览器自动化。调用链固定为：
+
+```text
+POST /datasets/v3/trigger
+GET  /datasets/v3/progress/{snapshot_id}
+GET  /datasets/v3/snapshot/{snapshot_id}?format=json
+```
+
+1. 只在未跟踪的 `.env` 中填写 `BRIGHTDATA_API_TOKEN`，其余参数参考 `.env.example`。Token 不写日志、不写响应、不保存到 SQLite。
+2. 在 `data/config/amazon_competitors.json` 中为已确认的竞品填写真实 `amazon_url`；项目不会猜 URL。URL 缺失时返回 `PRODUCT_URL_REQUIRED`，无 Token 时返回 `NOT_CONFIGURED`，均不会影响 DEMO 模式。
+3. 首次必须保持 `BRIGHTDATA_SCHEMA_CONFIRMED=false`，只配置一款商品并调用 `POST /api/reviews/collect`，请求 `{"max_reviews_per_product": 5}`。系统会在已忽略的 `data/reviews_real/schema_probe/` 保存实际键名、类型和不含标题/正文/作者信息的安全预览。
+4. 人工核对 5 条响应的真实字段映射后，才可将 `BRIGHTDATA_SCHEMA_CONFIRMED=true`，再执行四款商品每款最多 100 条。未确认 Schema 时，服务端会拒绝多商品或每款超过 5 条的请求。
+
+采集进度和结果按真实数量展示 Requested、Collected、Valid、Duplicate、Invalid 和各竞品明细；目标 400 不等于成功 400。`GET /api/reviews/collection/latest` 只读取最近结果，不发起外部请求。跨 `IMPORTED_REAL` 与 `BRIGHTDATA_REAL` 按外部 Review ID 或内容哈希统一去重。
+
+Evidence 明确区分 `review_url` 与 `product_url`：只有具体评论链接可以作为原始评论来源；商品链接不会冒充评论链接。Bright Data 返回字段变化时，应重新执行 1×5 Schema Probe，而不是猜测字段。真实评论为 0 时，REAL 模式 VOC 保持 `NEED_DATA`。
+
+## Apify 真实评论采集
+
+默认真实采集 Provider 可通过 `REVIEW_COLLECTION_PROVIDER=APIFY` 启用，Bright Data 实现继续保留为备用。免费模式使用 `kestrel/amazon-reviews-scraper` Actor；`axesso_data/amazon-reviews-scraper` 仅保留为历史兼容配置，不在免费模式启用。轮询只接受 `READY/RUNNING/SUCCEEDED/FAILED/TIMED-OUT/ABORTED`，达到 `APIFY_MAX_POLL_SECONDS` 后终止等待，不会无限轮询。Kestrel 单商品请求会将 `maxReviewsPerProduct` 限制为最多 13，并过滤 Dataset 的 `status` 行，只把 `type=review` 交给 ReviewStore。
+
+Token 只写入未跟踪的 `.env` 中的 `APIFY_API_TOKEN`。未配置时接口返回 `APIFY_NOT_CONFIGURED`，应用仍可正常运行。Actor 成功返回的最多 5 条脱敏 Schema 样本保存在 `data/fixtures/apify_review_response.sample.json`；样本排除用户名、用户 ID、作者和 Profile 字段。Apify、Bright Data 与 CSV 按 Review ID 或内容哈希跨来源去重。
 
 ## Amazon SP-API 手动同步
 

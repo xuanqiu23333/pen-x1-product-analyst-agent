@@ -69,7 +69,9 @@ class AnalysisRunner:
                 item.message='真实评论不足或语义分析未完成。' if item.status=='WARNING' else '已生成结构化结果。'
             except Exception as error: item.status='FAILED'; item.message=str(error)
         state.validation=validate_report(state); state.report['status']='VALIDATED' if state.validation.passed else 'REVIEW_REQUIRED'
-        self.output_dir.mkdir(parents=True,exist_ok=True); (self.output_dir/'PEN-X1 北美市场产品调研与上市可行性分析报告.md').write_text(state.report.get('markdown',''),encoding='utf-8')
+        self.output_dir.mkdir(parents=True,exist_ok=True)
+        report_name = 'PEN-X1 Real VOC Smoke Report.md' if mode == 'REAL' else 'PEN-X1 北美市场产品调研与上市可行性分析报告.md'
+        (self.output_dir / report_name).write_text(state.report.get('markdown',''),encoding='utf-8')
         return state
     @staticmethod
     def _meta(result): return {'status':result.status,'source_type':result.source_type,'source_name':result.source_name,'source_url':result.source_url,'retrieved_at':result.retrieved_at,'fallback_reason':result.fallback_reason}

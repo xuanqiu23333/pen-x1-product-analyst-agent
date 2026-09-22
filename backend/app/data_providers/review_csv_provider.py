@@ -18,7 +18,7 @@ class ReviewCsvProvider:
         if self.mode == 'REAL':
             rows = self.store.valid_reviews()
             return ProviderResult(data=rows, status='LIVE' if rows else 'NEED_DATA',
-                                  source_type='IMPORTED_REAL',
-                                  source_name='CSV 导入的真实评论（未经 Amazon 平台核验）',
+                                  source_type='REAL_REVIEW',
+                                  source_name='真实评论（CSV、Bright Data 或 Apify）',
                                   retrieved_at=self.store.stats()['last_collected'] or '')
         return ProviderResult(data=load_reviews(self.data_root), status='READY', source_type='SAMPLE', source_name='Review CSV import')

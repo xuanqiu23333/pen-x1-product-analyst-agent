@@ -1,0 +1,11 @@
+[
+  {
+    "timestamp": "2026-09-20T12:04:41.735Z",
+    "input": {
+      "url": "https://www.amazon.com/dp/B0CTCDPXFY/",
+      "reviews_to_not_include": [],
+      "max_reviews": 10,
+      "variation_specific": true
+    }
+  }
+]
